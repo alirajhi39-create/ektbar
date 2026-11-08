@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import type { AttemptResult } from '../types';
 import { getLevel, useCountUp, useMounted } from '../lib/utils';
+import { CERTIFICATE_MIN_PERCENTAGE } from '../data/school';
 
 interface ResultsProps {
   result: AttemptResult;
@@ -31,7 +32,7 @@ export default function Results({ result, onReview, onRetake, onCertificate, onH
 
   const starsCount = result.percentage >= 90 ? 3 : result.percentage >= 75 ? 2 : result.percentage >= 60 ? 1 : 0;
   /** الشهادة تُمنح فقط لمن حقق 75% فأكثر */
-  const eligibleForCertificate = result.percentage >= 75;
+  const eligibleForCertificate = result.percentage >= CERTIFICATE_MIN_PERCENTAGE;
 
   useEffect(() => {
     const colors = ['#006C35', '#C9A227', '#E9C766', '#ffffff', '#5DB7DA'];
@@ -140,7 +141,7 @@ export default function Results({ result, onReview, onRetake, onCertificate, onH
             ) : (
               <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-sand-200 bg-sand-50 px-4 py-3 text-center">
                 <span className="flex items-center gap-1.5 font-head text-sm font-extrabold text-slate-500">
-                  <Lock className="size-4" /> الشهادة تُمنح عند 75% فأكثر
+                  <Lock className="size-4" /> الشهادة تُمنح عند {CERTIFICATE_MIN_PERCENTAGE}% فأكثر
                 </span>
                 <p className="text-xs font-bold text-slate-400">
                   درجتك {Math.round(result.percentage)}% — راجع دروسك وأعد المحاولة لتحصل عليها!

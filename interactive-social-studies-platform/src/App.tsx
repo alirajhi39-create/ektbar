@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { AnswerValue, AttemptResult, Question, QuizSession, Settings, ShuffledQuestion } from './types';
 import { shuffle, uid } from './lib/utils';
+import { CERTIFICATE_MIN_PERCENTAGE } from './data/school';
 import { db, getQuestionMap, getQuestions } from './lib/db';
 import { auth } from './lib/auth';
 import { apiToken, checkApi, getConnection, probeApi, remote } from './lib/api';
@@ -189,7 +190,7 @@ export default function App() {
           onReview={() => setView({ name: 'review', result: view.result })}
           onRetake={() => startQuiz(view.result.studentName, view.result.className)}
           onCertificate={() => {
-            if (view.result.percentage >= 75) setView({ name: 'certificate', result: view.result });
+            if (view.result.percentage >= CERTIFICATE_MIN_PERCENTAGE) setView({ name: 'certificate', result: view.result });
           }}
           onHome={() => setView({ name: 'home' })}
         />

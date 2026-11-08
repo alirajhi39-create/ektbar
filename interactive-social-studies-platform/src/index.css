@@ -136,13 +136,14 @@ button { cursor: pointer; }
 
 input, select { font-family: var(--font-body); }
 
-/* ── طباعة الشهادة ── */
+/* ── طباعة الشهادة والتقارير ── */
 @media print {
   @page { size: A4 landscape; margin: 0; }
   html, body { background: #fff !important; }
   body * { visibility: hidden !important; }
-  #print-area, #print-area * { visibility: visible !important; }
-  .cert-viewport { zoom: 1 !important; }
+  #print-area, #print-area *,
+  #report-print-area, #report-print-area * { visibility: visible !important; }
+  .cert-viewport, .report-viewport { zoom: 1 !important; }
   #print-area {
     position: fixed !important;
     inset: 0 !important;
@@ -152,6 +153,22 @@ input, select { font-family: var(--font-body); }
     transform: none !important;
     box-shadow: none !important;
   }
+  #report-print-area {
+    position: static !important;
+    width: 100% !important;
+    min-height: auto !important;
+    zoom: 1 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+  .report-sheet {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .no-print { display: none !important; }
+  .report-table thead { display: table-header-group; }
+  .report-table tr { break-inside: avoid; page-break-inside: avoid; }
   .cert-sheet {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;

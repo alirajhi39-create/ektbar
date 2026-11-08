@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BarChart3, CheckCircle2, Cloud, Eye, FileSpreadsheet, HardDrive, Home as HomeIcon, Inbox,
-  KeyRound, Loader2, LogOut, MinusCircle, Percent, Power, RefreshCw, Search, ShieldCheck,
+  KeyRound, Loader2, LogOut, MinusCircle, Percent, Power, Printer, RefreshCw, Search, ShieldCheck,
   Trash2, Trophy, Users, X, XCircle,
 } from 'lucide-react';
+import ReportPrint from './ReportPrint';
 import type { AttemptResult, Question, Settings } from '../types';
 import {
   db, exportAttemptsCSV, getQuestions, isCustomBank, resetQuestions, saveQuestions,
@@ -54,6 +55,7 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
   const [busyAction, setBusyAction] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
   const [tab, setTab] = useState<'results' | 'questions'>('results');
+  const [report, setReport] = useState<{ list: AttemptResult[]; single: boolean } | null>(null);
 
   const bankMap = useMemo(() => new Map(bankQs.map((q) => [q.id, q])), [bankQs]);
 
@@ -265,6 +267,18 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
     return <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${cls}`}>{l.label}</span>;
   };
 
+  /* شاشة معاينة التقرير القابل للطباعة */
+  if (report) {
+    return (
+      <ReportPrint
+        attempts={report.list}
+        bank={bankQs}
+        single={report.single}
+        onClose={() => setReport(null)}
+      />
+    );
+  }
+
   const connChip = (
     <span className={`hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-extrabold sm:flex ${
       conn === 'api' ? 'bg-saudi-50 text-saudi-700 ring-1 ring-saudi-100' : conn === 'local' ? 'bg-sand-100 text-slate-500' : 'bg-cloud-50 text-cloud-400'
@@ -456,6 +470,12 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
               {classes.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
             <button
+              onClick={() => setReport({ list: filtered, single: false })}
+              className="flex items-center gap-2 rounded-2xl bg-gold-500 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-gold-500/25 transition hover:-translate-y-0.5"
+            >
+              <Printer className="size-4" /> طباعة التقرير
+            </button>
+            <button
               onClick={() => exportAttemptsCSV(filtered)}
               disabled={filtered.length === 0}
               className="flex items-center gap-2 rounded-2xl bg-saudi-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-saudi-600/25 transition hover:-translate-y-0.5 disabled:opacity-40"
@@ -508,6 +528,9 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1.5">
+                          <button onClick={() => setReport({ list: [a], single: true })} aria-label="طباعة تقرير الطالب" title="طباعة تقرير مفصّل للطالب" className="grid size-9 place-items-center rounded-xl bg-gold-50 text-gold-600 ring-1 ring-gold-200 transition hover:bg-gold-100">
+                            <Printer className="size-4" />
+                          </button>
                           <button onClick={() => setDetail(a)} aria-label="تفاصيل" className="grid size-9 place-items-center rounded-xl bg-cloud-50 text-cloud-400 ring-1 ring-cloud-100 transition hover:bg-cloud-100">
                             <Eye className="size-4" />
                           </button>

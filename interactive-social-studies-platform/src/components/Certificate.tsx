@@ -1,6 +1,7 @@
 import { ArrowRight, Printer } from 'lucide-react';
 import type { AttemptResult } from '../types';
 import { formatGregorian, formatHijri, getLevel } from '../lib/utils';
+import { SCHOOL } from '../data/school';
 
 interface CertificateProps {
   result: AttemptResult;
@@ -97,8 +98,8 @@ export default function Certificate({ result, onBack }: CertificateProps) {
 
             {/* المحتوى */}
             <div className="relative flex h-full flex-col items-center px-[22mm] py-[12mm] text-center">
-              <p className="font-head text-[6.5mm] font-extrabold text-saudi-800">مدرسة العروس الابتدائية</p>
-              <p className="mt-[1mm] text-[3.2mm] font-bold tracking-wide text-slate-500">منصة تحدي الدراسات الاجتماعية — الصف السادس الابتدائي</p>
+              <p className="font-head text-[6.5mm] font-extrabold text-saudi-800">{SCHOOL.name}</p>
+              <p className="mt-[1mm] text-[3.2mm] font-bold tracking-wide text-slate-500">منصة {SCHOOL.platform} — {SCHOOL.grade}</p>
 
               <h1
                 className="mt-[4mm] bg-gradient-to-l from-saudi-700 via-saudi-600 to-gold-500 bg-clip-text font-head text-[17mm] font-black leading-none text-transparent"
@@ -147,8 +148,9 @@ export default function Certificate({ result, onBack }: CertificateProps) {
               {/* الأسفل: التوقيعات والختم */}
               <div className="mt-auto flex w-full items-end justify-between px-[6mm]">
                 <div className="text-center">
-                  <p className="border-b-[0.35mm] border-slate-300 px-[10mm] pb-[7mm] text-[3.8mm] font-bold text-slate-500">معلم الدراسات الاجتماعية</p>
-                  <p className="mt-[2mm] text-[3mm] font-bold text-slate-400">التوقيع</p>
+                  <p className="font-head text-[4.2mm] font-black text-saudi-800">{SCHOOL.teacher}</p>
+                  <p className="mt-[1mm] border-b-[0.35mm] border-slate-300 px-[8mm] pb-[5mm] text-[3.2mm] font-bold text-slate-500">معلم الدراسات الاجتماعية</p>
+                  <p className="mt-[1.5mm] text-[2.8mm] font-bold text-slate-400">التوقيع</p>
                 </div>
 
                 <div className="flex flex-col items-center gap-[2mm]">
@@ -159,8 +161,9 @@ export default function Certificate({ result, onBack }: CertificateProps) {
                 </div>
 
                 <div className="text-center">
-                  <p className="border-b-[0.35mm] border-slate-300 px-[10mm] pb-[7mm] text-[3.8mm] font-bold text-slate-500">مدير المدرسة</p>
-                  <p className="mt-[2mm] text-[3mm] font-bold text-slate-400">التوقيع</p>
+                  <p className="font-head text-[4.2mm] font-black text-saudi-800">{SCHOOL.principal}</p>
+                  <p className="mt-[1mm] border-b-[0.35mm] border-slate-300 px-[8mm] pb-[5mm] text-[3.2mm] font-bold text-slate-500">مدير المدرسة</p>
+                  <p className="mt-[1.5mm] text-[2.8mm] font-bold text-slate-400">التوقيع</p>
                 </div>
               </div>
             </div>
