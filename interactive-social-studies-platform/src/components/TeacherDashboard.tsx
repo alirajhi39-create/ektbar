@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BarChart3, CheckCircle2, Cloud, Eye, FileSpreadsheet, HardDrive, Home as HomeIcon, Inbox,
-  KeyRound, Loader2, LogOut, MinusCircle, Percent, Power, Search, ShieldCheck,
+  KeyRound, Loader2, LogOut, MinusCircle, Percent, Power, RefreshCw, Search, ShieldCheck,
   Trash2, Trophy, Users, X, XCircle,
 } from 'lucide-react';
 import type { AttemptResult, Question, Settings } from '../types';
@@ -9,7 +9,7 @@ import {
   db, exportAttemptsCSV, getQuestions, isCustomBank, resetQuestions, saveQuestions,
 } from '../lib/db';
 import { auth } from '../lib/auth';
-import { checkApi, isAuthError, remote } from '../lib/api';
+import { checkApi, isAuthError, probeApi, remote, resetApiCache } from '../lib/api';
 import { UNIT_META } from '../data/questions';
 import { formatGregorian, formatTime, getLevel } from '../lib/utils';
 import QuestionBank from './QuestionBank';
@@ -64,35 +64,52 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
   }, [toast]);
 
   /* تحميل البيانات: Neon أولًا ثم المحلي */
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      if (await checkApi()) {
-        try {
-          const [{ attempts: list, bank, custom }, s] = await Promise.all([remote.getResults(), remote.getSettings()]);
-          if (!alive) return;
-          setAttempts(list);
-          setBankQs(bank);
-          setCustomBank(custom);
-          setSettings(s);
-          db.saveSettings(s);
-          onSettingsChanged(s);
-          setConn('api');
-          return;
-        } catch (e) {
-          if (isAuthError(e)) { onLogout(); return; }
-        }
+  const loadData = useCallback(async (): Promise<void> => {
+    if (await checkApi()) {
+      try {
+        const [{ attempts: list, bank, custom }, s] = await Promise.all([remote.getResults(), remote.getSettings()]);
+        setAttempts(list);
+        setBankQs(bank);
+        setCustomBank(custom);
+        setSettings(s);
+        db.saveSettings(s);
+        onSettingsChanged(s);
+        setConn('api');
+        return;
+      } catch (e) {
+        if (isAuthError(e)) { onLogout(); return; }
       }
-      if (!alive) return;
-      setConn('local');
-      setAttempts(db.getAttempts());
-      setSettings(db.getSettings());
-      setBankQs(getQuestions());
-      setCustomBank(isCustomBank());
-    })();
-    return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    }
+    setConn('local');
+    setAttempts(db.getAttempts());
+    setSettings(db.getSettings());
+    setBankQs(getQuestions());
+    setCustomBank(isCustomBank());
+  }, [onLogout, onSettingsChanged]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  /* إعادة الاتصال اليدوية — توقظ دوال الخادم وقاعدة Neon ثم تعيد التحميل */
+  const [reconnecting, setReconnecting] = useState(false);
+  const reconnect = async () => {
+    if (reconnecting) return;
+    setReconnecting(true);
+    try {
+      resetApiCache();
+      if (await probeApi()) {
+        setConn('checking');
+        await loadData();
+        setToast({ text: 'تم الاتصال بقاعدة Neon — التزامن الأونلاين مفعّل', ok: true });
+      } else {
+        setConn('local');
+        setToast({ text: 'الخادم غير متاح بعد — أضف DATABASE_URL في Vercel ثم أعد النشر (Redeploy)', ok: false });
+      }
+    } finally {
+      setReconnecting(false);
+    }
+  };
 
   const guard = (e: unknown): boolean => {
     if (isAuthError(e)) { onLogout(); return true; }
@@ -271,6 +288,25 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
         </div>
       ) : (
       <main className="mx-auto max-w-6xl px-4 pt-7">
+        {/* بانر الوضع المحلي مع إرشاد التفعيل */}
+        {conn === 'local' && (
+          <div className="anim-screen mb-5 flex flex-wrap items-center gap-3 rounded-3xl border-2 border-dashed border-gold-300 bg-gold-50 p-4">
+            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white text-gold-600 ring-1 ring-gold-200">
+              <HardDrive className="size-5" />
+            </span>
+            <div className="min-w-52 flex-1">
+              <p className="font-head text-sm font-black text-gold-800">الحفظ الحالي محلي على هذا الجهاز فقط</p>
+              <p className="text-xs font-bold leading-relaxed text-gold-700">
+                للمزامنة الأونلاين بين كل الأجهزة: من لوحة Vercel اربط قاعدة Neon عبر قائمة <b>Storage</b> (أو أضف متغير <b>DATABASE_URL</b> من neon.tech) ثم اضغط <b>Redeploy</b>، وبعدها اضغط «إعادة الاتصال».
+              </p>
+            </div>
+            <button onClick={reconnect} disabled={reconnecting} className="flex shrink-0 items-center gap-2 rounded-2xl bg-saudi-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-saudi-600/25 transition hover:-translate-y-0.5 disabled:opacity-60">
+              {reconnecting ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+              {reconnecting ? 'جارٍ إيقاظ القاعدة…' : 'إعادة الاتصال'}
+            </button>
+          </div>
+        )}
+
         {/* التبويبات */}
         <div className="anim-screen mb-5 flex gap-2 rounded-3xl border border-saudi-100 bg-white p-2 shadow-sm">
           {([

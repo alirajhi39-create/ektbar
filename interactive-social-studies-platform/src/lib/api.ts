@@ -13,14 +13,38 @@ export function getConnection(): Connection {
   return conn;
 }
 
-export async function checkApi(): Promise<boolean> {
+export function resetApiCache(): void {
+  conn = 'unknown';
+}
+
+async function tryHealth(timeoutMs: number): Promise<boolean> {
   try {
-    const r = await fetch('/api/health', { signal: AbortSignal.timeout(4000) });
-    conn = r.ok ? 'on' : 'off';
+    const r = await fetch('/api/health', { signal: AbortSignal.timeout(timeoutMs) });
+    return r.ok;
   } catch {
-    conn = 'off';
+    return false;
   }
-  return conn === 'on';
+}
+
+/** فحص سريع بمهلة كافية لإيقاظ دالة الخادم (Cold Start) */
+export async function checkApi(): Promise<boolean> {
+  if (conn === 'on') return true;
+  const ok = await tryHealth(7500);
+  conn = ok ? 'on' : 'off';
+  return ok;
+}
+
+/** فحص معمّق متعدد المحاولات — يُستخدم يدويًا من لوحة المعلم لإيقاظ Neon */
+export async function probeApi(): Promise<boolean> {
+  for (let i = 0; i < 3; i++) {
+    if (await tryHealth(9000)) {
+      conn = 'on';
+      return true;
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+  }
+  conn = 'off';
+  return false;
 }
 
 /* ─── رمز جلسة المعلم ─── */
