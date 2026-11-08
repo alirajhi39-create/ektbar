@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BarChart3, CheckCircle2, Cloud, Eye, FileSpreadsheet, HardDrive, Home as HomeIcon, Inbox,
   KeyRound, Loader2, LogOut, MinusCircle, Percent, Power, RefreshCw, Search, ShieldCheck,
@@ -91,6 +91,13 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
     void loadData();
   }, [loadData]);
 
+  /* إخفاء بانر الوضع المحلي (يُحفظ للجلسة) */
+  const [bannerHidden, setBannerHidden] = useState(() => sessionStorage.getItem('sst.banner.off') === '1');
+  const hideBanner = () => {
+    sessionStorage.setItem('sst.banner.off', '1');
+    setBannerHidden(true);
+  };
+
   /* إعادة الاتصال اليدوية — توقظ دوال الخادم وقاعدة Neon ثم تعيد التحميل */
   const [reconnecting, setReconnecting] = useState(false);
   const reconnect = async () => {
@@ -110,6 +117,16 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
       setReconnecting(false);
     }
   };
+
+  /* عند الهبوط للوضع المحلي: أعد الإيقاظ تلقائيًا مرة واحدة (القاعدة قد تكون نائمة) */
+  const autoProbed = useRef(false);
+  useEffect(() => {
+    if (conn !== 'local' || autoProbed.current) return;
+    autoProbed.current = true;
+    const t = setTimeout(() => { void reconnect(); }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conn]);
 
   const guard = (e: unknown): boolean => {
     if (isAuthError(e)) { onLogout(); return true; }
@@ -289,7 +306,7 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
       ) : (
       <main className="mx-auto max-w-6xl px-4 pt-7">
         {/* بانر الوضع المحلي مع إرشاد التفعيل */}
-        {conn === 'local' && (
+        {conn === 'local' && !bannerHidden && (
           <div className="anim-screen mb-5 flex flex-wrap items-center gap-3 rounded-3xl border-2 border-dashed border-gold-300 bg-gold-50 p-4">
             <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white text-gold-600 ring-1 ring-gold-200">
               <HardDrive className="size-5" />
@@ -297,13 +314,20 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
             <div className="min-w-52 flex-1">
               <p className="font-head text-sm font-black text-gold-800">الحفظ الحالي محلي على هذا الجهاز فقط</p>
               <p className="text-xs font-bold leading-relaxed text-gold-700">
-                للمزامنة الأونلاين بين كل الأجهزة: من لوحة Vercel اربط قاعدة Neon عبر قائمة <b>Storage</b> (أو أضف متغير <b>DATABASE_URL</b> من neon.tech) ثم اضغط <b>Redeploy</b>، وبعدها اضغط «إعادة الاتصال».
+                {reconnecting
+                  ? 'يحاول الموقع الآن الاتصال بقاعدة Neon تلقائيًا…'
+                  : <>سيُعاد الاتصال تلقائيًا خلال لحظات. إن استمر الوضع محليًا فالقاعدة غير مربوطة بعد: من لوحة Vercel اربط Neon عبر قائمة <b>Storage</b> (أو أضف <b>DATABASE_URL</b> من neon.tech) ثم <b>Redeploy</b>.</>}
               </p>
             </div>
-            <button onClick={reconnect} disabled={reconnecting} className="flex shrink-0 items-center gap-2 rounded-2xl bg-saudi-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-saudi-600/25 transition hover:-translate-y-0.5 disabled:opacity-60">
-              {reconnecting ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-              {reconnecting ? 'جارٍ إيقاظ القاعدة…' : 'إعادة الاتصال'}
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button onClick={reconnect} disabled={reconnecting} className="flex items-center gap-2 rounded-2xl bg-saudi-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-saudi-600/25 transition hover:-translate-y-0.5 disabled:opacity-60">
+                {reconnecting ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                {reconnecting ? 'جارٍ إيقاظ القاعدة…' : 'إعادة الاتصال'}
+              </button>
+              <button onClick={hideBanner} aria-label="إخفاء التنبيه" title="إخفاء التنبيه" className="grid size-10 place-items-center rounded-xl border border-gold-300 bg-white text-gold-700 transition hover:bg-gold-100">
+                <X className="size-4" />
+              </button>
+            </div>
           </div>
         )}
 

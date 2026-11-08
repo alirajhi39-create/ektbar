@@ -3,7 +3,7 @@ import type { AnswerValue, AttemptResult, Question, QuizSession, Settings, Shuff
 import { shuffle, uid } from './lib/utils';
 import { db, getQuestionMap, getQuestions } from './lib/db';
 import { auth } from './lib/auth';
-import { apiToken, checkApi, getConnection, remote } from './lib/api';
+import { apiToken, checkApi, getConnection, probeApi, remote } from './lib/api';
 import Home from './components/Home';
 import Quiz from './components/Quiz';
 import Results from './components/Results';
@@ -90,9 +90,9 @@ export default function App() {
   /* اكتشاف الخادم ومزامنة الإعدادات والبنك */
   useEffect(() => {
     let alive = true;
-    (async () => {
-      if (!(await checkApi())) return;
-      if (alive) setCloudOn(true);
+    let wakeTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const syncRemote = async () => {
       try {
         const s = await remote.getSettings();
         if (alive) { setSettings(s); db.saveSettings(s); }
@@ -101,8 +101,28 @@ export default function App() {
         const { questions } = await remote.getQuizQuestions();
         if (alive) setHomeBank(questions);
       } catch { /* تجاهل */ }
+    };
+
+    (async () => {
+      if (await checkApi()) {
+        if (alive) setCloudOn(true);
+        await syncRemote();
+        return;
+      }
+      /* إن فشل الفحص الأول (الدالة نائمة) أعد المحاولة تلقائيًا بعد ثوانٍ */
+      wakeTimer = setTimeout(async () => {
+        if (!alive || getConnection() === 'on') return;
+        if (await probeApi()) {
+          if (alive) setCloudOn(true);
+          await syncRemote();
+        }
+      }, 5000);
     })();
-    return () => { alive = false; };
+
+    return () => {
+      alive = false;
+      if (wakeTimer) clearTimeout(wakeTimer);
+    };
   }, []);
 
   /* مزامنة دورية: تفعيل/إيقاف الاختبار يصل لكل الأجهزة تلقائيًا */
