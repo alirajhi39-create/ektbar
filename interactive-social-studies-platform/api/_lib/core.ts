@@ -4,12 +4,22 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { QUESTIONS } from '../../src/data/questions';
 import type { Question } from '../../src/types';
 
-/* ─── اتصال Neon ─── */
+/* ─── اتصال Neon — يقبل جميع أسماء المتغيرات الشائعة ─── */
 type Sql = NeonQueryFunction<false, false>;
 let cached: Sql | null = null;
 
+const ENV_KEYS = ['DATABASE_URL', 'POSTGRES_URL', 'NEON_DATABASE_URL', 'DATABASE_URL_UNPOOLED', 'POSTGRES_URL_NON_POOLING'];
+
+function connectionString(): string {
+  for (const key of ENV_KEYS) {
+    const v = process.env[key];
+    if (typeof v === 'string' && v.trim().startsWith('postgres')) return v.trim();
+  }
+  return '';
+}
+
 export function db(): Sql {
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+  const url = connectionString();
   if (!url) throw new Error('DATABASE_URL غير مضبوطة في إعدادات Vercel');
   if (!cached) cached = neon(url);
   return cached;

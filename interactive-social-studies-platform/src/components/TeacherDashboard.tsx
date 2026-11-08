@@ -9,7 +9,7 @@ import {
   db, exportAttemptsCSV, getQuestions, isCustomBank, resetQuestions, saveQuestions,
 } from '../lib/db';
 import { auth } from '../lib/auth';
-import { checkApi, isAuthError, probeApi, remote, resetApiCache } from '../lib/api';
+import { checkApi, getApiHint, isAuthError, probeApi, remote, resetApiCache } from '../lib/api';
 import { UNIT_META } from '../data/questions';
 import { formatGregorian, formatTime, getLevel } from '../lib/utils';
 import QuestionBank from './QuestionBank';
@@ -111,7 +111,7 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
         setToast({ text: 'تم الاتصال بقاعدة Neon — التزامن الأونلاين مفعّل', ok: true });
       } else {
         setConn('local');
-        setToast({ text: 'الخادم غير متاح بعد — أضف DATABASE_URL في Vercel ثم أعد النشر (Redeploy)', ok: false });
+        setToast({ text: `فشل الاتصال — ${getApiHint() || 'أضف DATABASE_URL في Vercel ثم Redeploy'}`, ok: false });
       }
     } finally {
       setReconnecting(false);
@@ -318,6 +318,11 @@ export default function TeacherDashboard({ onLogout, onHome, onSettingsChanged }
                   ? 'يحاول الموقع الآن الاتصال بقاعدة Neon تلقائيًا…'
                   : <>سيُعاد الاتصال تلقائيًا خلال لحظات. إن استمر الوضع محليًا فالقاعدة غير مربوطة بعد: من لوحة Vercel اربط Neon عبر قائمة <b>Storage</b> (أو أضف <b>DATABASE_URL</b> من neon.tech) ثم <b>Redeploy</b>.</>}
               </p>
+              {!reconnecting && getApiHint() && (
+                <p className="mt-1.5 w-fit rounded-lg bg-red-50 px-2.5 py-1 text-[11px] font-extrabold text-red-600 ring-1 ring-red-100">
+                  سبب الفشل: {getApiHint()}
+                </p>
+              )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button onClick={reconnect} disabled={reconnecting} className="flex items-center gap-2 rounded-2xl bg-saudi-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-saudi-600/25 transition hover:-translate-y-0.5 disabled:opacity-60">

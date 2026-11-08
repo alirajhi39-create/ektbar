@@ -17,11 +17,30 @@ export function resetApiCache(): void {
   conn = 'unknown';
 }
 
+/* آخر سبب فشل لمعرفة الخادم — يُعرض للمعلم في اللوحة */
+let lastHint = '';
+export function getApiHint(): string {
+  return lastHint;
+}
+
 async function tryHealth(timeoutMs: number): Promise<boolean> {
   try {
     const r = await fetch('/api/health', { signal: AbortSignal.timeout(timeoutMs) });
-    return r.ok;
+    if (r.ok) {
+      lastHint = '';
+      return true;
+    }
+    const data = (await r.json().catch(() => null)) as { hint?: string } | null;
+    if (data?.hint) {
+      lastHint = data.hint;
+    } else if (r.status === 404) {
+      lastHint = 'دوال /api غير منشورة مع الموقع — ارفع المشروع كاملًا (بما فيه مجلد api) إلى Vercel';
+    } else {
+      lastHint = `استجابة غير متوقعة من الخادم (رمز ${r.status})`;
+    }
+    return false;
   } catch {
+    lastHint = 'تعذر الوصول إلى دوال الخادم على هذا العنوان';
     return false;
   }
 }
