@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import {
   BookOpenCheck, Check, Crown, Landmark, Lightbulb, Loader2, Pencil, Plus,
-  RotateCcw, ScrollText, Search, Trash2, X,
+  RotateCcw, ScrollText, Search, Trash2, UploadCloud, X,
 } from 'lucide-react';
 import type { Question, QuestionType, UnitKey } from '../types';
 import { UNIT_META } from '../data/questions';
 import { isAuthError } from '../lib/api';
+import { mergeBanks } from '../lib/importQuestions';
+import ImportDialog from './ImportDialog';
 
 const TYPE_LABEL: Record<QuestionType, string> = { mcq: 'اختيار من متعدد', tf: 'صح أو خطأ' };
 const UNIT_ICON: Record<UnitKey, typeof ScrollText> = { history: ScrollText, first: Landmark, second: Crown };
@@ -53,6 +55,7 @@ export default function QuestionBank({ bank, custom, persist, resetDefault, noti
   const [delId, setDelId] = useState<number | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const totalMarks = bank.length * 2;
 
@@ -146,8 +149,34 @@ export default function QuestionBank({ bank, custom, persist, resetDefault, noti
     }
   };
 
+  const doImport = async (incoming: Question[], replaceBank: boolean) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const next = replaceBank
+        ? incoming.map((q, i) => ({ ...q, id: i + 1 })).sort((a, b) => a.id - b.id)
+        : mergeBanks(bank, incoming);
+      await persist(next);
+      notify(`تم استيراد ${incoming.length} سؤالًا بنجاح${replaceBank ? ' مع استبدال البنك' : ''}`);
+    } catch (e) {
+      handleError(e);
+      throw e;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
+      {/* نافذة الاستيراد */}
+      {importOpen && (
+        <ImportDialog
+          existingCount={bank.length}
+          onConfirm={doImport}
+          onClose={() => setImportOpen(false)}
+        />
+      )}
+
       {/* ترويسة البنك */}
       <div className="anim-screen flex flex-wrap items-center gap-3 rounded-3xl border border-saudi-100 bg-white p-5 shadow-sm">
         <span className="grid size-12 place-items-center rounded-2xl bg-saudi-100 text-saudi-700">
@@ -160,6 +189,9 @@ export default function QuestionBank({ bank, custom, persist, resetDefault, noti
             {custom && <span className="mr-2 rounded-full bg-gold-100 px-2 py-0.5 text-[11px] font-extrabold text-gold-700">بنك معدّل</span>}
           </p>
         </div>
+        <button onClick={() => setImportOpen(true)} className="flex items-center gap-2 rounded-2xl bg-cloud-100 px-4 py-2.5 text-sm font-extrabold text-saudi-800 ring-1 ring-cloud-200 transition hover:-translate-y-0.5 hover:bg-cloud-200">
+          <UploadCloud className="size-4" /> استيراد من ملف
+        </button>
         <button onClick={() => { setErr(''); setEditor(freshEditor()); }} className="flex items-center gap-2 rounded-2xl bg-saudi-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-saudi-600/25 transition hover:-translate-y-0.5 hover:bg-saudi-700">
           <Plus className="size-4" /> إضافة سؤال
         </button>
