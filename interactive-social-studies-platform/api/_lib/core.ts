@@ -1,8 +1,8 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { QUESTIONS } from '../../src/data/questions';
-import type { Question } from '../../src/types';
+import { QUESTIONS } from './defaultQuestions';
+import type { Question } from './defaultQuestions';
 
 /* ─── اتصال Neon — يقبل جميع أسماء المتغيرات الشائعة ─── */
 type Sql = NeonQueryFunction<false, false>;

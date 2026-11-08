@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, ensureSchema, getBank, json, parseBody, sanitizeBank, tokenFromReq, validateBank } from './_lib/core';
-import { QUESTIONS } from '../src/data/questions';
+import { QUESTIONS } from './_lib/defaultQuestions';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
