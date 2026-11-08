@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Cloud, HardDrive, KeyRound, Loader2, Lock, ShieldCheck, User } from 'lucide-react';
+import { ArrowRight, Cloud, HardDrive, KeyRound, Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { auth } from '../lib/auth';
 import { apiToken, checkApi, getConnection, remote } from '../lib/api';
 
@@ -8,30 +8,20 @@ interface TeacherLoginProps {
   onBack: () => void;
 }
 
-type Mode = 'loading' | 'setup' | 'login';
-
 export default function TeacherLogin({ onSuccess, onBack }: TeacherLoginProps) {
-  const [mode, setMode] = useState<Mode>('loading');
-  const [username, setUsername] = useState('');
+  const [checking, setChecking] = useState(true);
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [lockLeft, setLockLeft] = useState(0);
 
-  /* اكتشاف وضع الاتصال وحالة الحساب */
+  /* اكتشاف وضع الاتصال */
   useEffect(() => {
     let alive = true;
     (async () => {
-      try {
-        if (await checkApi()) {
-          const s = await remote.authStatus();
-          if (alive) setMode(s.hasAccount ? 'login' : 'setup');
-          return;
-        }
-      } catch { /* الرجوع للوضع المحلي */ }
+      await checkApi();
       if (alive) {
-        setMode(auth.hasAccount() ? 'login' : 'setup');
+        setChecking(false);
         setLockLeft(auth.lockRemainingSec());
       }
     })();
@@ -48,27 +38,20 @@ export default function TeacherLogin({ onSuccess, onBack }: TeacherLoginProps) {
 
   const submit = async () => {
     setError('');
+    if (busy || checking) return;
     if (!cloud && lockLeft > 0) return;
-    if (!username.trim() || !password) { setError('أدخل اسم المستخدم وكلمة المرور'); return; }
-    if (mode === 'setup') {
-      if (password.length < 6) { setError('كلمة المرور يجب ألا تقل عن 6 أحرف'); return; }
-      if (password !== confirm) { setError('تأكيد كلمة المرور غير متطابق'); return; }
-    }
+    if (!password.trim()) { setError('أدخل كلمة المرور'); return; }
     setBusy(true);
     try {
       if (cloud) {
-        const { token } = mode === 'setup'
-          ? await remote.register(username, password)
-          : await remote.login(username, password);
+        const { token } = await remote.login(password);
         apiToken.set(token);
-      } else if (mode === 'setup') {
-        await auth.register(username, password);
       } else {
-        await auth.login(username, password);
+        await auth.login(password);
       }
       onSuccess();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'حدث خطأ غير متوقع');
+      setError(e instanceof Error ? e.message : 'كلمة المرور غير صحيحة');
       if (!cloud) setLockLeft(auth.lockRemainingSec());
     } finally {
       setBusy(false);
@@ -82,71 +65,44 @@ export default function TeacherLogin({ onSuccess, onBack }: TeacherLoginProps) {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-2 bg-gradient-to-l from-saudi-600 via-gold-400 to-cloud-300" />
 
           <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-saudi-600 text-white shadow-lg shadow-saudi-600/30">
-            {mode === 'setup' ? <ShieldCheck className="size-8" /> : <Lock className="size-8" />}
+            <Lock className="size-8" />
           </span>
 
-          <h1 className="mt-4 text-center font-head text-2xl font-black text-saudi-900">
-            {mode === 'setup' ? 'إنشاء حساب المعلم' : 'لوحة تحكم المعلم'}
-          </h1>
+          <h1 className="mt-4 text-center font-head text-2xl font-black text-saudi-900">لوحة تحكم المعلم</h1>
           <p className="mt-1.5 text-center text-sm font-medium text-slate-500">
-            {mode === 'setup'
-              ? 'أول تشغيل — أنشئ بيانات الدخول الخاصة بك. تُحفظ كلمة المرور مشفّرة ولا يمكن استرجاعها نصيًا.'
-              : 'سجّل دخولك للوصول إلى نتائج الطلاب وإدارة الاختبار.'}
+            أدخل كلمة المرور للوصول إلى نتائج الطلاب وإدارة الاختبار.
           </p>
 
           {/* مؤشر الاتصال */}
-          {mode !== 'loading' && (
+          {!checking && (
             <p className={`mt-3 flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-extrabold ${cloud ? 'bg-saudi-50 text-saudi-700 ring-1 ring-saudi-100' : 'bg-sand-100 text-slate-500'}`}>
               {cloud ? <Cloud className="size-3.5" /> : <HardDrive className="size-3.5" />}
-              {cloud ? 'متصل بقاعدة بيانات Neon السحابية' : 'وضع محلي — المعاينة بدون خادم'}
+              {cloud ? 'متصل بقاعدة بيانات Neon — النتائج تُحفظ أونلاين لكل الأجهزة' : 'وضع محلي — المعاينة بدون خادم'}
             </p>
           )}
 
-          {mode === 'loading' ? (
+          {checking ? (
             <div className="grid place-items-center py-12">
               <Loader2 className="size-10 animate-spin text-saudi-500" />
             </div>
           ) : (
             <>
-              <div className="mt-6 grid gap-3">
-                <label className="block">
-                  <span className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-saudi-800"><User className="size-4" /> اسم المستخدم</span>
-                  <input
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="مثال: teacher"
-                    autoComplete="username"
-                    dir="ltr"
-                    className="w-full rounded-2xl border-2 border-sand-200 bg-sand-50 px-4 py-3 text-left font-bold transition placeholder:text-right focus:border-saudi-500 focus:bg-white focus:outline-none"
-                  />
-                </label>
+              <div className="mt-6">
                 <label className="block">
                   <span className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-saudi-800"><KeyRound className="size-4" /> كلمة المرور</span>
                   <input
                     type="password"
+                    inputMode="numeric"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && submit()}
-                    placeholder={mode === 'setup' ? '6 أحرف على الأقل' : '••••••••'}
-                    autoComplete={mode === 'setup' ? 'new-password' : 'current-password'}
+                    placeholder="••••••"
+                    autoComplete="current-password"
+                    autoFocus
                     dir="ltr"
-                    className="w-full rounded-2xl border-2 border-sand-200 bg-sand-50 px-4 py-3 text-left font-bold transition placeholder:text-right focus:border-saudi-500 focus:bg-white focus:outline-none"
+                    className="w-full rounded-2xl border-2 border-sand-200 bg-sand-50 px-4 py-3.5 text-center font-head text-xl font-black tracking-[0.4em] transition focus:border-saudi-500 focus:bg-white focus:outline-none"
                   />
                 </label>
-                {mode === 'setup' && (
-                  <label className="block">
-                    <span className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-saudi-800"><KeyRound className="size-4" /> تأكيد كلمة المرور</span>
-                    <input
-                      type="password"
-                      value={confirm}
-                      onChange={(e) => setConfirm(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && submit()}
-                      autoComplete="new-password"
-                      dir="ltr"
-                      className="w-full rounded-2xl border-2 border-sand-200 bg-sand-50 px-4 py-3 text-left font-bold transition focus:border-saudi-500 focus:bg-white focus:outline-none"
-                    />
-                  </label>
-                )}
               </div>
 
               {error && (
@@ -164,7 +120,7 @@ export default function TeacherLogin({ onSuccess, onBack }: TeacherLoginProps) {
                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-saudi-700 to-saudi-500 px-5 py-3.5 font-head text-lg font-extrabold text-white shadow-lg shadow-saudi-600/30 transition hover:-translate-y-0.5 disabled:opacity-50"
               >
                 {busy ? <Loader2 className="size-5 animate-spin" /> : <ShieldCheck className="size-5" />}
-                {busy ? 'جارٍ التحقق…' : mode === 'setup' ? 'إنشاء الحساب والدخول' : 'تسجيل الدخول'}
+                {busy ? 'جارٍ التحقق…' : 'دخول اللوحة'}
               </button>
             </>
           )}

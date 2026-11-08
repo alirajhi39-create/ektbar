@@ -81,6 +81,7 @@ export default function App() {
   const [view, setView] = useState<View>({ name: 'home' });
   const [settings, setSettings] = useState<Settings>(() => db.getSettings());
   const [homeBank, setHomeBank] = useState<QuizSource[]>(() => getQuestions());
+  const [cloudOn, setCloudOn] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -91,6 +92,7 @@ export default function App() {
     let alive = true;
     (async () => {
       if (!(await checkApi())) return;
+      if (alive) setCloudOn(true);
       try {
         const s = await remote.getSettings();
         if (alive) { setSettings(s); db.saveSettings(s); }
@@ -102,6 +104,17 @@ export default function App() {
     })();
     return () => { alive = false; };
   }, []);
+
+  /* مزامنة دورية: تفعيل/إيقاف الاختبار يصل لكل الأجهزة تلقائيًا */
+  useEffect(() => {
+    if (!cloudOn) return;
+    const t = setInterval(() => {
+      remote.getSettings()
+        .then((s) => { setSettings(s); db.saveSettings(s); })
+        .catch(() => {});
+    }, 20_000);
+    return () => clearInterval(t);
+  }, [cloudOn]);
 
   const startQuiz = useCallback(async (name: string, cls: string) => {
     try {

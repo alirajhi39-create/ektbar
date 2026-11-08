@@ -59,12 +59,10 @@ export interface RemoteResultPayload {
 }
 
 export const remote = {
-  /* المصادقة */
+  /* المصادقة — كلمة مرور واحدة فقط */
   authStatus: () => call<{ hasAccount: boolean }>('/api/auth?action=status'),
-  register: (username: string, password: string) =>
-    call<{ token: string }>('/api/auth?action=register', { method: 'POST', body: JSON.stringify({ username, password }) }),
-  login: (username: string, password: string) =>
-    call<{ token: string }>('/api/auth?action=login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  login: (password: string) =>
+    call<{ token: string }>('/api/auth?action=login', { method: 'POST', body: JSON.stringify({ password }) }),
   logout: () => call<{ ok: boolean }>('/api/auth?action=logout', { method: 'POST', body: '{}' }),
   changePassword: (current: string, next: string) =>
     call<{ ok: boolean }>('/api/auth?action=change-password', { method: 'POST', body: JSON.stringify({ current, next }) }),
