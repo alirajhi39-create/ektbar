@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@theme {
+  --font-head: "Cairo", "Tajawal", sans-serif;
+  --font-body: "Tajawal", "Cairo", sans-serif;
+
+  --color-saudi-50: #ecf7f1;
+  --color-saudi-100: #d3ecdf;
+  --color-saudi-200: #a7d9c1;
+  --color-saudi-300: #6fbf9c;
+  --color-saudi-400: #3ba376;
+  --color-saudi-500: #0f8a54;
+  --color-saudi-600: #006c35;
+  --color-saudi-700: #045a2d;
+  --color-saudi-800: #064724;
+  --color-saudi-900: #053a1e;
+  --color-saudi-950: #042414;
+
+  --color-gold-50: #fbf6e4;
+  --color-gold-100: #f6ecc6;
+  --color-gold-200: #eed88b;
+  --color-gold-300: #e5c35b;
+  --color-gold-400: #ddb23e;
+  --color-gold-500: #c9a227;
+  --color-gold-600: #ab801e;
+  --color-gold-700: #875f1b;
+  --color-gold-800: #704d1d;
+  --color-gold-900: #5f401d;
+
+  --color-cloud-50: #f0f9fd;
+  --color-cloud-100: #ddf1f9;
+  --color-cloud-200: #bfe5f3;
+  --color-cloud-300: #92d2ea;
+  --color-cloud-400: #5db7da;
+
+  --color-sand-50: #fbf8f1;
+  --color-sand-100: #f5f0e3;
+  --color-sand-200: #eae1c9;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-sand-50);
+  color: #20332a;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-gold-200);
+  color: var(--color-saudi-900);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-sand-100); }
+::-webkit-scrollbar-thumb { background: var(--color-saudi-300); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-saudi-500); }
+
+/* ── نقش هندسي نجدي خفيف ── */
+.pattern-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23006C35' stroke-opacity='0.055' stroke-width='1.4'%3E%3Crect x='28' y='28' width='40' height='40'/%3E%3Crect x='28' y='28' width='40' height='40' transform='rotate(45 48 48)'/%3E%3Ccircle cx='48' cy='48' r='7'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.pattern-gold {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23C9A227' stroke-opacity='0.12' stroke-width='1.4'%3E%3Crect x='28' y='28' width='40' height='40'/%3E%3Crect x='28' y='28' width='40' height='40' transform='rotate(45 48 48)'/%3E%3Ccircle cx='48' cy='48' r='7'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ── حركات ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { transform: scale(1.07); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes shakeX {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes growBar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes bounceSoft {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-10px) rotate(4deg); }
+}
+@keyframes ringPulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 108, 53, 0.35); }
+  70% { box-shadow: 0 0 0 16px rgba(0, 108, 53, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 108, 53, 0); }
+}
+
+.anim-screen { animation: fadeUp 0.55s cubic-bezier(0.22, 0.9, 0.3, 1) both; }
+.anim-pop { animation: popIn 0.5s cubic-bezier(0.22, 1.2, 0.36, 1) both; }
+.anim-float { animation: floaty 4.5s ease-in-out infinite; }
+.anim-bounce-soft { animation: bounceSoft 2.6s ease-in-out infinite; }
+.anim-shake { animation: shakeX 0.5s ease both; }
+.anim-pulse-ring { animation: ringPulse 2.2s ease-out infinite; }
+.d-1 { animation-delay: 0.08s; } .d-2 { animation-delay: 0.16s; }
+.d-3 { animation-delay: 0.24s; } .d-4 { animation-delay: 0.32s; }
+.d-5 { animation-delay: 0.4s; } .d-6 { animation-delay: 0.5s; }
+
+.bar-shimmer {
+  background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* قوس نجدي */
+.arch-top { border-radius: 999px 999px 28px 28px; }
+
+.text-balance { text-wrap: balance; }
+
+button { cursor: pointer; }
+:focus-visible {
+  outline: 3px solid var(--color-gold-400);
+  outline-offset: 2px;
+}
+
+input, select { font-family: var(--font-body); }
+
+/* ── طباعة الشهادة ── */
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+  html, body { background: #fff !important; }
+  body * { visibility: hidden !important; }
+  #print-area, #print-area * { visibility: visible !important; }
+  .cert-viewport { zoom: 1 !important; }
+  #print-area {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    zoom: 1 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .cert-sheet {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
