@@ -39,6 +39,24 @@ function Seal() {
 export default function Certificate({ result, onBack }: CertificateProps) {
   const level = getLevel(result.percentage);
 
+  /* حاجز حماية: الشهادة تُمنح فقط لمن حقق 75% فأكثر */
+  if (result.percentage < 75) {
+    return (
+      <div className="pattern-bg grid min-h-screen place-items-center px-4">
+        <div className="anim-pop w-full max-w-md rounded-3xl border border-saudi-100 bg-white p-8 text-center shadow-2xl">
+          <h1 className="font-head text-2xl font-black text-saudi-900">الشهادة غير متاحة بعد</h1>
+          <p className="mt-3 font-medium leading-relaxed text-slate-500">
+            تُمنح شهادة الإنجاز للطلاب الذين يحققون <b className="text-saudi-700">75% فأكثر</b>.
+            درجتك الحالية {Math.round(result.percentage)}% — راجع دروسك وحاول مجددًا، أنت قادر!
+          </p>
+          <button onClick={onBack} className="mt-6 w-full rounded-2xl bg-saudi-600 px-5 py-3 font-head font-extrabold text-white shadow-lg shadow-saudi-600/25 transition hover:bg-saudi-700">
+            العودة للنتيجة
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pattern-bg min-h-screen px-4 py-8">
       {/* شريط الأدوات — لا يُطبع */}

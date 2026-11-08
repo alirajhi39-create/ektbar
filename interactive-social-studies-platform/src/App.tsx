@@ -188,7 +188,9 @@ export default function App() {
           result={view.result}
           onReview={() => setView({ name: 'review', result: view.result })}
           onRetake={() => startQuiz(view.result.studentName, view.result.className)}
-          onCertificate={() => setView({ name: 'certificate', result: view.result })}
+          onCertificate={() => {
+            if (view.result.percentage >= 75) setView({ name: 'certificate', result: view.result });
+          }}
           onHome={() => setView({ name: 'home' })}
         />
       );

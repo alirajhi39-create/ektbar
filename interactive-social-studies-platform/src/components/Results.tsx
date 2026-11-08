@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import {
-  Award, CheckCircle2, Home, ListChecks, Medal, MinusCircle, RotateCcw,
+  Award, CheckCircle2, Home, ListChecks, Lock, Medal, MinusCircle, RotateCcw,
   ShieldCheck, Star, Trophy, XCircle,
 } from 'lucide-react';
 import type { AttemptResult } from '../types';
@@ -30,6 +30,8 @@ export default function Results({ result, onReview, onRetake, onCertificate, onH
   const mounted = useMounted();
 
   const starsCount = result.percentage >= 90 ? 3 : result.percentage >= 75 ? 2 : result.percentage >= 60 ? 1 : 0;
+  /** الشهادة تُمنح فقط لمن حقق 75% فأكثر */
+  const eligibleForCertificate = result.percentage >= 75;
 
   useEffect(() => {
     const colors = ['#006C35', '#C9A227', '#E9C766', '#ffffff', '#5DB7DA'];
@@ -131,9 +133,20 @@ export default function Results({ result, onReview, onRetake, onCertificate, onH
             <button onClick={onReview} className="flex items-center justify-center gap-2 rounded-2xl bg-saudi-600 px-5 py-3.5 font-head font-extrabold text-white shadow-lg shadow-saudi-600/25 transition hover:-translate-y-0.5 hover:bg-saudi-700">
               <ListChecks className="size-5" /> مراجعة الإجابات
             </button>
-            <button onClick={onCertificate} className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-gold-500 to-gold-400 px-5 py-3.5 font-head font-extrabold text-white shadow-lg shadow-gold-500/25 transition hover:-translate-y-0.5">
-              <Award className="size-5" /> شهادة الإنجاز (طباعة / PDF)
-            </button>
+            {eligibleForCertificate ? (
+              <button onClick={onCertificate} className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-gold-500 to-gold-400 px-5 py-3.5 font-head font-extrabold text-white shadow-lg shadow-gold-500/25 transition hover:-translate-y-0.5">
+                <Award className="size-5" /> شهادة الإنجاز (طباعة / PDF)
+              </button>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-sand-200 bg-sand-50 px-4 py-3 text-center">
+                <span className="flex items-center gap-1.5 font-head text-sm font-extrabold text-slate-500">
+                  <Lock className="size-4" /> الشهادة تُمنح عند 75% فأكثر
+                </span>
+                <p className="text-xs font-bold text-slate-400">
+                  درجتك {Math.round(result.percentage)}% — راجع دروسك وأعد المحاولة لتحصل عليها!
+                </p>
+              </div>
+            )}
             <button onClick={onRetake} className="flex items-center justify-center gap-2 rounded-2xl border-2 border-saudi-200 bg-white px-5 py-3.5 font-head font-extrabold text-saudi-700 transition hover:-translate-y-0.5 hover:border-saudi-400">
               <RotateCcw className="size-5" /> محاولة جديدة
             </button>
